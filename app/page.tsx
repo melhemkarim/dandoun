@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
+import Image from 'next/image' // Import Image component
 
 interface HiddenQuestion {
   question: string
@@ -23,6 +24,30 @@ interface Song {
   thumbnail: string // Path to a local thumbnail or URL
 }
 
+// Define types for confetti pieces
+interface ConfettiPiece {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  r: number
+  rot: number
+  col: string
+  type: 'confetti' | 'flower'
+}
+
+// Define types for heart particles
+interface Heart {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  size: number
+  opacity: number
+  rotation: number
+  color: string
+}
+
 export default function Page() {
   const SECRET = '15625'
   const CODE_LENGTH = 5
@@ -38,18 +63,18 @@ export default function Page() {
   const audioRef = useRef<HTMLAudioElement>(null)
   const welcomeCanvasRef = useRef<HTMLCanvasElement | null>(null); // For welcome screen heart burst
   const hiddenQuestions: HiddenQuestion[] = [
-    { question: "What's my fav football club?", answer: 'barcelona', digit: '1', place: 1 },
-    { question: "What's my fav nickname that u call me?", answer: 'karruma', digit: '5', place: 2 },
-    { question: "What's my fav thing about u? (text me if u need a hint)", answer: 'everything', digit: '6', place: 3 },
-    { question: "Who's my future wife?", answer: 'dana', digit: '2', place: 4 },
+    { question: "What&apos;s my fav football club?", answer: 'barcelona', digit: '1', place: 1 },
+    { question: "What&apos;s my fav nickname that u call me?", answer: 'karruma', digit: '5', place: 2 },
+    { question: "What&apos;s my fav thing about u? (text me if u need a hint)", answer: 'everything', digit: '6', place: 3 },
+    { question: "Who&apos;s my future wife?", answer: 'dana', digit: '2', place: 4 },
     { question: "Text me for the last digit 💜", answer: '', digit: '5', place: 5 },
   ]
 
   const envelopes: Envelope[] = [
-    { id: 1, title: "open it if you are sad", message: "Even on gray days, you’re my sunshine. ☀️ Let me be yours for a little while. I wish I could hug all the sadness away. Imagine me squeezing you super tight. 🤗" },
+    { id: 1, title: "open it if you are sad", message: "Even on gray days, you&apos;re my sunshine. ☀️ Let me be yours for a little while. I wish I could hug all the sadness away. Imagine me squeezing you super tight. 🤗" },
     { id: 2, title: "Need a laugh?", message: "Ofc bta3rfe shu rah ykun fi hon. NEKTE SARI3AAAA" },
     { id: 3, title: "open it if you are happy", message: "Seeing you happy is my favorite hobby. Keep smiling, baby" },
-    { id: 4, title: "open it if you are feeling insecure", message: "Hey love, you’re beautiful in every way… and don’t let anyone (including your brain) tell you otherwise, w ma tense enek ahla w azka w a2wa w ashtar benet bl dene ya albe" },
+    { id: 4, title: "open it if you are feeling insecure", message: "Hey love, you&apos;re beautiful in every way… and don&apos;t let anyone (including your brain) tell you otherwise, w ma tense enek ahla w azka w a2wa w ashtar benet bl dene ya albe" },
     { id: 5, title: "open it if you are angry", message: "Ya3ne ma bkazeb 3layke u look extra hot when ur angry. bas its gonna be alright ya habibe if you are angry we face it together even if im the problem... hihi" },
     { id: 6, title: "open it if you are haivng a bad day", message: "Nothing is gonna be perfect ya albe ull have a bad day but all i can say is ull never face this bad day alone ya habibe whenever u need ill be here no matter when or where" },
   ]
@@ -150,9 +175,9 @@ export default function Page() {
     if (!unlocked || !confettiRef.current) return
     const canvas = confettiRef.current
     const ctx = canvas.getContext('2d')!
-    let w = canvas.width = window.innerWidth
-    let h = canvas.height = window.innerHeight
-    let pieces: any[] = []
+    const w = canvas.width = window.innerWidth
+    const h = canvas.height = window.innerHeight
+    const pieces: ConfettiPiece[] = [] // Changed to const and explicitly typed
 
     for (let i = 0; i < 400; i++) {
       pieces.push({
@@ -198,7 +223,7 @@ export default function Page() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
-      let hearts: any[] = [];
+      const hearts: Heart[] = []; // Changed to const and explicitly typed
       const createHeart = () => {
         const x = canvas.width / 2;
         const y = canvas.height / 2;
@@ -217,11 +242,16 @@ export default function Page() {
         });
       };
 
-      const drawHeart = (heart: any) => {
+      const drawHeart = (heart: Heart) => { // Explicitly typed heart parameter
         ctx.save();
         ctx.translate(heart.x, heart.y);
         ctx.rotate(heart.rotation * Math.PI / 180);
-        ctx.fillStyle = `rgba(${parseInt(heart.color.substring(4, 7))}, ${parseInt(heart.color.substring(8, 11))}, ${parseInt(heart.color.substring(12, 15))}, ${heart.opacity})`;
+        // Note: The color parsing logic for rgba might be off if hsl is directly passed.
+        // For simplicity, let's keep it in hsl/string format if ctx.fillStyle supports it,
+        // or convert it properly to rgba. For now, assuming direct color string works.
+        ctx.fillStyle = heart.color;
+        ctx.globalAlpha = heart.opacity; // Use globalAlpha for opacity
+
         ctx.beginPath();
         ctx.moveTo(0, heart.size / 2);
         ctx.bezierCurveTo(heart.size / 2, heart.size / 2, heart.size / 2, 0, 0, -heart.size / 2);
@@ -232,7 +262,7 @@ export default function Page() {
       };
 
       let animationFrameId: number;
-      let heartInterval: NodeJS.Timeout;
+      const heartInterval = setInterval(createHeart, 100); // Changed to const
 
       const animate = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -259,7 +289,6 @@ export default function Page() {
       }
 
       // Keep creating some hearts for a short duration
-      heartInterval = setInterval(createHeart, 100);
       setTimeout(() => clearInterval(heartInterval), 2000); // Stop creating hearts after 2 seconds
 
       animate();
@@ -274,6 +303,11 @@ export default function Page() {
 
   return (
     <main className='min-h-screen bg-gradient-to-br from-purple-50 via-purple-100 to-indigo-100 flex flex-col items-center justify-center p-6 relative font-poppins overflow-hidden'> {/* Added overflow-hidden */}
+      {/*
+        Warning: Custom fonts not added in `pages/_document.js` will only load for a single page.
+        This is discouraged. For global custom fonts, consider moving this to pages/_document.js.
+        See: https://nextjs.org/docs/messages/no-page-custom-font
+      */}
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Pacifico&display=swap" rel="stylesheet" />
       <canvas ref={confettiRef} className='pointer-events-none fixed inset-0 z-50' />
       <audio ref={audioRef} src='/music.mp3' preload='auto' />
@@ -322,7 +356,7 @@ export default function Page() {
 
           <div className='flex flex-col items-center justify-center'>
             <div className='w-72 h-72 rounded-2xl overflow-hidden shadow-lg border-2 border-white animate-pulse-slow-image'> {/* Added animate-pulse-slow-image */}
-              <img src='/us.jpeg' alt='us' className='w-full h-full object-cover opacity-80' />
+              <Image src='/us.jpeg' alt='us' width={288} height={288} className='w-full h-full object-cover opacity-80' /> {/* Replaced <img> with <Image /> */}
             </div>
             <p className='mt-4 text-center text-sm text-purple-700 animate-fade-in-delay'>I love you sattoul</p> {/* Added animate-fade-in-delay */}
           </div>
@@ -374,15 +408,15 @@ export default function Page() {
         <section className='w-full max-w-5xl p-6 bg-white/80 backdrop-blur-sm rounded-3xl shadow-2xl mt-6 animate-tabs-entrance z-10'>
           <div className='flex flex-wrap justify-center gap-6 mb-6'>
             <div onClick={() => setActiveTab(0)} className='tab-square group'>
-              <img src='/about-icon.png' alt='About' className='w-full h-full object-cover rounded-lg p-2'/>
+              <Image src='/about-icon.png' alt='About' width={72} height={72} className='w-full h-full object-cover rounded-lg p-2'/> {/* Replaced <img> with <Image /> */}
               <span className='tab-label'>About</span>
             </div>
             <div onClick={() => setActiveTab(1)} className='tab-square group'>
-              <img src='/message-icon.png' alt='Messages' className='w-full h-full object-cover rounded-lg p-2'/>
+              <Image src='/message-icon.png' alt='Messages' width={72} height={72} className='w-full h-full object-cover rounded-lg p-2'/> {/* Replaced <img> with <Image /> */}
               <span className='tab-label'>Messages</span>
             </div>
             <div onClick={() => setActiveTab(2)} className='tab-square group'>
-              <img src='/music-icon.png' alt='Songs' className='w-full h-full object-cover rounded-lg p-2'/>
+              <Image src='/music-icon.png' alt='Songs' width={72} height={72} className='w-full h-full object-cover rounded-lg p-2'/> {/* Replaced <img> with <Image /> */}
               <span className='tab-label'>Songs</span>
             </div>
           </div>
@@ -391,22 +425,22 @@ export default function Page() {
           {activeTab === 0 && (
             <div className='p-4 text-purple-700 animate-tab-content-fade-in'>
               <h3 className="text-2xl font-semibold mb-4 font-pacifico">Welcome to our website</h3>
-              <p className="mb-4">This space is dedicated to our beautiful memories and the special moments we've shared. Every laugh, every conversation, every adventure—they all mean the world to me. I'm so grateful for you.</p>
+              <p className="mb-4">This space is dedicated to our beautiful memories and the special moments we&apos;ve shared. Every laugh, every conversation, every adventure—they all mean the world to me. I&apos;m so grateful for you.</p>
               <p className="mb-4">Even on my free time everything im thinking about is you and trying my best to do something to put a smile on ur beautiful face my love and i hope im doing enought cause u desrve the whole world baby</p>
               <p className="mb-4">Keep this website cause ull never know when i might add something new to it or a surpise might pop up in it i love you</p>
 
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <img src="/memory1.jpeg" alt="Memory 1" className="rounded-lg shadow-md w-full h-full object-cover"/>
-                <img src="/memory2.jpeg" alt="Memory 2" className="rounded-lg shadow-md w-full h-full object-cover"/>
+                <Image src="/memory1.jpeg" alt="Memory 1" width={400} height={300} className="rounded-lg shadow-md w-full h-full object-cover"/> {/* Replaced <img> with <Image /> */}
+                <Image src="/memory2.jpeg" alt="Memory 2" width={400} height={300} className="rounded-lg shadow-md w-full h-full object-cover"/> {/* Replaced <img> with <Image /> */}
               </div>
-              <p className="mt-4">Here's to many more unforgettable moments together! 🥂</p>
+              <p className="mt-4">Here&apos;s to many more unforgettable moments together! 🥂</p>
             </div>
           )}
 
           {activeTab === 1 && (
             <div className='flex flex-col md:flex-row flex-wrap justify-center gap-6 animate-tab-content-fade-in'>
-              <p className=" text-purple-600 mb-10">so i decided to keep some messages for u here cause what if u were outside and u dont have the messages with u and u needed them ull have them everywhere maybe it wont feel the same but better than nothing baby</p>
+              <p className=" text-purple-600 mb-10">so i decided to keep some messages for u here cause what if u were outside and u don&apos;t have the messages with u and u needed them ull have them everywhere maybe it won&apos;t feel the same but better than nothing baby</p>
               {envelopes.map(env => (
                 <div key={env.id} className='envelope-container' onClick={() => toggleEnvelope(env.id)}>
                   <div className={`envelope ${openedEnvelopes.includes(env.id) ? 'opened' : ''}`}>
@@ -429,7 +463,7 @@ export default function Page() {
               <p className="text-purple-600 mb-6 text-center w-full max-w-2xl">These are some of the songs that remind me of us, or just songs I love and want to share with you, my darling. Enjoy listening! 💖</p>
               {songs.map(song => (
                 <div key={song.id} className='song-card w-full sm:w-64 lg:w-72'>
-                  <img src={song.thumbnail} alt={song.title} className='song-thumbnail'/>
+                  <Image src={song.thumbnail} alt={song.title} width={80} height={80} className='song-thumbnail'/> {/* Replaced <img> with <Image /> */}
                   <h4 className='font-semibold text-purple-800 text-lg mt-2'>{song.title}</h4>
                   <p className='text-sm text-purple-600 mb-3'>{song.artist}</p>
                   <iframe
@@ -711,6 +745,12 @@ export default function Page() {
             transform: translateY(-5px) scale(1.05);
             box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
         }
+        /* The Image component itself won't have a direct width/height style applied from here.
+           It's best to control its size via the width/height props directly on <Image>
+           or by wrapping it in a div with defined dimensions.
+           The .tab-square img rule will apply to the actual rendered <img> element inside <Image>.
+           So max-width/height here are still useful.
+        */
         .tab-square img {
             max-width: 60%; /* Adjust image size */
             max-height: 60%;
